@@ -1,0 +1,27 @@
+# Deep Learning
+torch
+torchvision
+timm
+pytorch-lightning
+
+# Computer Vision
+opencv-python
+Pillow
+imageio
+
+# Data processing
+numpy
+pandas
+scipy
+
+# Visualization and progress bar
+tqdm
+scikit-learn
+matplotlib
+seaborn
+
+# Tensor manipulation
+einops
+
+# Config
+pyyaml
