@@ -15,10 +15,10 @@ from src.data_utils import get_sample_frames
 def plot_sample_frames(root, sample_classes=["Ăn", "Nghỉ ngơi", "Chạy"], n_frames=5, save_path=None):
     
     # Set up
-    plt.figure(figsize=(12, 6))
     n_sample_classes = len(sample_classes)
+    fig, axes = plt.subplots(n_sample_classes, n_frames, figsize=(15,8))
     
-    for y, cls in enumerate(sample_classes):
+    for row, cls in enumerate(sample_classes):
         # Get sample video
         sample_dir = Path(root) / cls
         if not (sample_dir.exists() and sample_dir.is_dir()):
@@ -38,17 +38,24 @@ def plot_sample_frames(root, sample_classes=["Ăn", "Nghỉ ngơi", "Chạy"], n
                 attempt += 1
         
         # Plotting
-        for idx, frame in enumerate(sample_frames):
-            plt_idx = n_frames * y + idx + 1
-            plt.subplot(n_sample_classes, n_frames, plt_idx)
-            plt.imshow(frame)
-            plt.axis("off")
-            if idx == (n_frames // 2):
-                plt.title(cls)
+        for col in range(n_frames):
+            ax = axes[row, col]
+            ax.imshow(sample_frames[col])
+            ax.axis("off")
+            
+        # Labeling each row
+        fig.text(
+            0.1,
+            1 - (row + 0.5) / n_sample_classes,
+            cls,
+            ha="left",
+            va="center",
+            fontsize=16
+        )
                 
-    plt.tight_layout()
+    plt.tight_layout(rect=[0.05, 0, 1, 1])
     plt.suptitle("Sample Frames", fontsize=16)
-    plt.subplots_adjust(top=0.88)
+    plt.subplots_adjust(top=0.88, left=0.2)
 
     if save_path:
         plt.savefig(save_path)
