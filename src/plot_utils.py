@@ -29,11 +29,13 @@ def plot_sample_frames(root, sample_classes=["Ăn", "Nghỉ ngơi", "Chạy"], n
         sample_path = random.choice(all_path)
         
         # Get sample frames
+        attempt = 0
         sample_frames = get_sample_frames(sample_path, num_frames=n_frames)
         if sample_frames is None:
-            while sample_frames is None:
+            while sample_frames is None and attempt < 10:
                 sample_path = random.choice(all_path)
                 sample_frames = get_sample_frames(sample_path, num_frames=n_frames)
+                attempt += 1
         
         # Plotting
         for idx, frame in enumerate(sample_frames):
