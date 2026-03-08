@@ -4,6 +4,7 @@ Utility functions for handling data
 
 import cv2
 import numpy as np
+from pathlib import Path
 
 
 def get_sample_frames(video_path, num_frames=5):
@@ -30,3 +31,18 @@ def get_sample_frames(video_path, num_frames=5):
 
     cap.release()
     return frames
+
+
+def get_all_path(root):
+    all_path = []
+    for cls in root.iterdir():
+        if not cls.is_dir():
+            continue
+        
+        for video_path in cls.iterdir():
+            if not video_path.is_file():
+                continue
+            
+            all_path.append(video_path)
+            
+    return all_path
