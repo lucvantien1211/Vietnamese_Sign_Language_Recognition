@@ -48,7 +48,7 @@ def get_all_path(root):
     return all_path
 
 
-def get_video_resolution(video_path):
+def get_video_metadata(video_path):
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
@@ -56,20 +56,9 @@ def get_video_resolution(video_path):
     
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    
-    cap.release()
-    
-    return height, width
-
-
-def get_video_frame_count(video_path):
-    cap = cv2.VideoCapture(video_path)
-    
-    if not cap.isOpened():
-        return None
-    
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
     
     cap.release()
     
-    return frame_count
+    return height, width, frame_count, fps
