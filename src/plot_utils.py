@@ -5,6 +5,7 @@ Utility functions for visualization
 from pathlib import Path
 import random
 import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -57,6 +58,25 @@ def plot_sample_frames(root, sample_classes=["Ăn", "Nghỉ ngơi", "Chạy"], n
     plt.suptitle("Sample Frames", fontsize=16)
     plt.subplots_adjust(top=0.88, left=0.2)
 
+    if save_path:
+        plt.savefig(save_path)
+
+    plt.show()
+    
+    
+def plot_resolution_distribution(all_width, all_height, save_path=None):
+    # Set up
+    plt.figure(figsize=(8, 6))
+    
+    # Plotting
+    square_res_x = square_res_y = np.arange(250, step=1)
+    plt.plot(square_res_x, square_res_y, "--r", label="Square Frame Ratio (1:1)")
+    plt.scatter(all_width, all_height, alpha=0.5)
+    plt.title("Resolution Distribution")
+    plt.xlabel("Width (pixel)")
+    plt.ylabel("Height (pixel)")
+    plt.legend()
+    
     if save_path:
         plt.savefig(save_path)
 
