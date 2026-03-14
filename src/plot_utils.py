@@ -81,3 +81,29 @@ def plot_resolution_distribution(all_width, all_height, save_path=None):
         plt.savefig(save_path)
 
     plt.show()
+    
+    
+def plot_frame_count_distribution(all_frame_count, save_path=None):
+    # Set up
+    plt.figure(figsize=(8, 6))
+    frame_count_dist = all_frame_count.value_counts()
+    
+    # Plotting
+    ax = sns.barplot(
+        x=frame_count_dist.index,
+        y=frame_count_dist.values,
+        color="skyblue",
+        edgecolor="black",
+        linewidth=1.2
+    )
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", linestyle="--")
+    
+    plt.title("Frame Count Distribution")
+    plt.xlabel("Number of Frames")
+    plt.ylabel("Number of Videos")
+    
+    if save_path:
+        plt.savefig(save_path)
+    
+    plt.show()
