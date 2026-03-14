@@ -59,7 +59,7 @@ def extract_metadata(root, output_path):
         })
         
         if (idx+1) % 100 == 0:
-            print(f"Completed {idx+1}/{n_videos}")
+            print(f"\nCompleted {idx+1}/{n_videos}")
             
     print("Metadata extraction completed. Saving CSV ...")
     df = pd.DataFrame(data)
