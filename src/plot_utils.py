@@ -107,3 +107,29 @@ def plot_frame_count_distribution(all_frame_count, save_path=None):
         plt.savefig(save_path)
     
     plt.show()
+    
+    
+def plot_class_balance(labels, save_path=None):
+    # Set up
+    plt.figure(figsize=(18, 6))
+    class_count = labels.value_counts()
+    
+    # Plotting
+    ax = sns.barplot(
+        x=class_count.index,
+        y=class_count.values,
+        hue=class_count.index,
+        palette="flare"
+    )
+    ax.set_axisbelow(True)
+    ax.grid(axis="y", linestyle="--")
+    plt.xticks(rotation=90, fontsize=10)
+    
+    plt.title("Number of Videos per Class", fontsize=16)
+    plt.xlabel("Class", fontsize=12)
+    plt.ylabel("Number of Videos", fontsize=12)
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    
+    plt.show()
