@@ -2,6 +2,7 @@
 Utility functions for handling data
 '''
 
+import torch
 import cv2
 import numpy as np
 from pathlib import Path
@@ -30,6 +31,24 @@ def get_sample_frames(video_path, num_frames=5):
             frames.append(frame)
 
     cap.release()
+    return frames
+
+
+def read_video(video_path):
+    cap = cv2.VideoCapture(video_path)
+    frames = []
+    
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frames.append(frame)
+    cap.release()
+    
+    if len(frames) == 0:
+        raise ValueError(f"Could not read any frames from {video_path}")
+    frames = torch.from_numpy(np.stack(frames, axis=0))
     return frames
 
 
