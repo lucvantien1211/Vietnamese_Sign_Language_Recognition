@@ -33,13 +33,23 @@ def get_sample_frames(video_path, num_frames=5):
     return frames
 
 
-def get_all_path(root):
+def get_all_path(root, labeled=True):
+    root = Path(root)
     all_path = []
-    for cls in root.iterdir():
-        if not cls.is_dir():
-            continue
-        
-        for video_path in cls.iterdir():
+    
+    if labeled:
+        for cls in root.iterdir():
+            if not cls.is_dir():
+                continue
+            
+            for video_path in cls.iterdir():
+                if not video_path.is_file():
+                    continue
+                
+                all_path.append(video_path)
+                
+    else:
+        for video_path in root.iterdir():
             if not video_path.is_file():
                 continue
             
