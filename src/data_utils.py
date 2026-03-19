@@ -5,6 +5,7 @@ Utility functions for handling data
 import torch
 import cv2
 import numpy as np
+import unicodedata
 from pathlib import Path
 
 
@@ -91,3 +92,7 @@ def get_video_metadata(video_path):
     cap.release()
     
     return height, width, frame_count, fps
+
+
+def nfc_normalize(s):
+    return unicodedata.normalize("NFC", s)

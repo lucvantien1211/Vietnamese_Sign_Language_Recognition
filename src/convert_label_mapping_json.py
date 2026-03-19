@@ -10,6 +10,7 @@ import pickle
 import json
 import argparse
 
+from data_utils import nfc_normalize
 
 ROOT = Path(__file__).parents[1] / "data/dataset"
 DEFAULT_PKL = ROOT / "label_mapping.pkl"
@@ -39,6 +40,8 @@ def parse_args():
 def convert_pkl_to_json(pkl_path, json_path):
     with open(pkl_path, "rb") as f:
         data = pickle.load(f)
+        
+    data = {nfc_normalize(k): v for k, v in data.items()}
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
