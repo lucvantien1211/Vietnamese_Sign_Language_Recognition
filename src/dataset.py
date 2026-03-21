@@ -9,6 +9,19 @@ import json
 from src.data_utils import read_video, nfc_normalize
 
 
+def collate_fn(batch):
+    frames = torch.stack([item["frames"] for item in batch])
+    output = {"frames": frames}
+    
+    if "label" in batch[0] and batch[0]["label"] is not None:
+        output["label"] = torch.tensor([item["label"] for item in batch])
+
+    if "path" in batch[0]:
+        output["path"] = [item["path"] for item in batch]
+
+    return output
+
+
 class VSLDataset(Dataset):
     def __init__(
         self, paths, label_mapping_path,
@@ -46,7 +59,7 @@ class VSLDataset(Dataset):
         
         output = {"frames": frames, "label": label} if self.mode != "test" \
             else {"frames": frames, "path": video_path}
-        
+
         return output
     
     def _resample_frames(self, frames):
