@@ -32,7 +32,7 @@ class VSLDataset(Dataset):
         self.labels = [
             self.label2id[nfc_normalize(video_path.parent.name)]
             for video_path in paths
-        ]
+        ] if mode != "test" else [None] * len(paths)
         
     def __len__(self):
         return len(self.paths)
@@ -43,7 +43,11 @@ class VSLDataset(Dataset):
         frames = read_video(video_path)
         frames = self._resample_frames(frames)
         frames = self._normalize(frames)
-        return {"frames": frames, "label": label}
+        
+        output = {"frames": frames, "label": label} if self.mode != "test" \
+            else {"frames": frames, "path": video_path}
+        
+        return output
     
     def _resample_frames(self, frames):
         total = frames.shape[0]
