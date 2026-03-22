@@ -14,7 +14,8 @@ class CRNN(nn.Module):
         self.cnn = nn.Sequential(*list(resnet.children())[:-2])
         self.feature_dim = 512
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.rnn = nn.LSTM(self.feature_dim, hidden_size, batch_first=True, dropout=0.3)
+        self.rnn = nn.LSTM(self.feature_dim, hidden_size, batch_first=True)
+        self.dropout = nn.Dropout(0.3)
         self.fc = nn.Linear(hidden_size, num_classes)
 
     def forward(self, x):
@@ -24,5 +25,5 @@ class CRNN(nn.Module):
         pooled = self.pool(features).squeeze(-1).squeeze(-1)
         seq = pooled.view(B, T, self.feature_dim)
         rnn_out, _ = self.rnn(seq)
-        final = rnn_out[:, -1, :]
+        final = self.dropout(rnn_out[:, -1, :])
         return self.fc(final)

@@ -14,10 +14,10 @@ def collate_fn(batch):
     output = {"frames": frames}
     
     if "label" in batch[0] and batch[0]["label"] is not None:
-        output["label"] = torch.tensor([item["label"] for item in batch])
+        output["labels"] = torch.tensor([item["label"] for item in batch])
 
     if "path" in batch[0]:
-        output["path"] = [item["path"] for item in batch]
+        output["paths"] = [item["path"] for item in batch]
 
     return output
 
