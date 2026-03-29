@@ -6,6 +6,7 @@ from pathlib import Path
 import random
 import cv2
 import numpy as np
+from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -132,4 +133,161 @@ def plot_class_balance(labels, save_path=None):
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
     
+    plt.show()
+    
+    
+def plot_confusion_matrix(
+    y_true, y_pred, labels, display_labels, top_k=10, figsize=(20, 26),
+    normalize="true", save_path=None
+):
+    '''
+    Plot confusion matrix and a table of top_k misclassified pairs
+    
+    Args:
+        y_true (lst)        : true labels
+        y_pred (lst)        : predictions from model
+        labels (lst)        : list of integer labels
+        display_labels (lst): labels to display
+        top_k (int)         : number of classes with highest confusion to include
+                              in confusion matrix, default: 10
+        figsize (tuple)     : figure size, default: (20, 26)
+        fontsize (float)    : size of texts for labels
+        normalize (str)     : option to normalize confusion matrix
+                              (same in sklearn.metrics.confusion_matrix),
+                              but only accepts 2 value: "true" (normalize
+                              by row) and None (no normalization), default: "true"
+        save_path (str)     : path to save the plot if provided, default: None
+
+    Returns:
+        None
+    '''
+    
+    # Full confusion matrix
+    cm = confusion_matrix(y_true, y_pred, labels=labels, normalize=normalize)
+
+    # Find (i, j) indices (i != j) that have highest confusion
+    confusions = []
+    for i in range(len(cm)):
+        for j in range(len(cm)):
+            if i != j and cm[i][j] > 0:
+                confusions.append((i, j, cm[i][j]))
+
+    # Sorting and find top-k confused pairs
+    top_confusions = sorted(confusions, key=lambda x: x[2], reverse=True)[:top_k]
+
+    # Set up plots
+    fig, axes = plt.subplots(
+        nrows=2, figsize=figsize, gridspec_kw={"height_ratios": [4, 1]}
+    )
+
+    # Plot confusion matrix
+    sns.heatmap(
+        cm, cmap="Blues", linewidths=0.5, linecolor="gray",
+        xticklabels=display_labels, yticklabels=display_labels,
+        cbar_kws={"label": "Proportion" if normalize else "Count"}, ax=axes[0]
+    )
+
+    axes[0].set_title("Confusion Matrix", fontsize=16, fontweight="bold", pad=20)
+    axes[0].set_xlabel("Predicted Label", fontsize=14)
+    axes[0].set_ylabel("True Label", fontsize=14)
+    axes[0].tick_params(axis="x", labelsize=13)
+    axes[0].tick_params(axis="y", labelsize=13)
+    plt.setp(axes[0].get_xticklabels(), rotation=90, ha="right")
+
+    # Table of top_k misclassified pairs
+    columns = ["Ground Truth", "Predicted", "Proportion" if normalize else "Count"]
+    data = [
+        [display_labels[i], display_labels[j], f"{v:.2f}" if normalize else int(v)]
+        for i, j, v in top_confusions
+    ]
+
+    axes[1].axis("off")
+    table = axes[1].table(
+        cellText=data, colLabels=columns, loc="center", cellLoc="center",
+        colColours=["#d3d3d3"] * len(columns), bbox=[0, 0, 1, 1]
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(14)
+    table.scale(1, 2)
+    axes[1].set_title(
+        f"Top-{top_k} Misclassified Pairs", fontsize=14, fontweight="bold", pad=10
+    )
+    
+    plt.tight_layout(h_pad=5)
+
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight")
+
+    plt.show()
+    
+    
+def plot_training_progress(
+    avg_training_losses,
+    avg_val_losses,
+    precision_scores,
+    recall_scores,
+    f1_scores,
+    lr_changes,
+    save_path=None
+):
+    '''
+    Plot training process over epochs, specifically, 3 subplots are created:
+    - One plot for average train and validation loss
+    - One plot for accuracy and weighted F1 score on validation data
+    - One plot for learning rates
+
+    Args:
+        avg_training_losses (lst): average training loss
+        avg_val_losses (lst)     : average validation loss
+        precision_scores (lst)   : precision on validation data
+        recall_scores (lst)      : recall on validation data
+        f1_scores (lst)          : macro F1 score on validation data
+        lr_changes (lst)         : learning rates
+        save_path (str)          : path to save the plot if provided, default: None
+
+    Returns:
+        None
+    '''
+
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(12, 15))
+    n_epochs = [i+1 for i in range(len(avg_training_losses))]
+
+    # Avg Training vs Validation loss
+    axes[0].plot(n_epochs, avg_training_losses, label="Train", color="blue")
+    axes[0].plot(n_epochs, avg_val_losses, label="Validation", color="red")
+    axes[0].set(
+        xlabel="Epoch",
+        ylabel="Average Loss",
+        title="Average Training vs Validation Loss"
+    )
+    axes[0].legend(loc="upper right")
+    axes[0].grid(True)
+
+    # Precision, Recall and Macro F1 score on validation data
+    axes[1].plot(n_epochs, precision_scores, label="Precision", color="blue")
+    axes[1].plot(n_epochs, recall_scores, label="Recall", color="green")
+    axes[1].plot(n_epochs, f1_scores, label="Macro F1 Score", color="red")
+    axes[1].set(
+        xlabel="Epoch",
+        ylabel="Score (%)",
+        title="Validation Precision, Recall and Macro F1 Score"
+    )
+    axes[1].legend(loc="lower right")
+    axes[1].grid(True)
+
+    # Learning rate
+    axes[2].plot(n_epochs, lr_changes)
+    axes[2].set(
+        xlabel="Epoch",
+        ylabel="Learning Rate",
+        title="Learning Rate Changes"
+    )
+    axes[2].grid(True)
+
+    plt.suptitle("Training Process", fontsize=16)
+    plt.tight_layout()
+
+    if save_path:
+        plt.savefig(save_path, bbox_inches="tight")
+
     plt.show()
