@@ -9,7 +9,7 @@ from pathlib import Path
 from tqdm.auto import tqdm
 import argparse
 
-from data_utils import get_all_path, get_video_metadata
+from src.data_utils import get_all_path, get_video_metadata
 
 
 DEFAULT_ROOT = Path(__file__).parents[1] / "data/dataset"

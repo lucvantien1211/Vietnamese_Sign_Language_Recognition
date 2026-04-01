@@ -10,7 +10,7 @@ import pickle
 import json
 import argparse
 
-from data_utils import nfc_normalize
+from src.data_utils import nfc_normalize
 
 ROOT = Path(__file__).parents[1] / "data/dataset"
 DEFAULT_PKL = ROOT / "label_mapping.pkl"
