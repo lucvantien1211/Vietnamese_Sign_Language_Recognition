@@ -219,5 +219,17 @@ __marimo__/
 # Data folder
 data/
 
+# Logs directory
+logs/
+
+# Train progress plot directory
+train_progress/
+
+# Validation confusion results directory
+validation_results/
+
+# Models directory
+models/
+
 # Notebook for testing function
 notebooks/function_testing.ipynb
