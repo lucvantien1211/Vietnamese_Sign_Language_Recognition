@@ -1,15 +1,28 @@
 from pathlib import Path
+import logging
 from datetime import datetime
+import time
+
 import pandas as pd
+import numpy as np
+import random
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_recall_fscore_support
+
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from tqdm.auto import tqdm
-import logging
 
 from src.plot_utils import plot_confusion_matrix
+
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 
 def split_train_val_paths(train_root, metadata_path, random_state=None):
@@ -75,7 +88,7 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
 
 
 def train_model(
-    model, train_loader, val_loader,
+    model, train_loader, val_loader, logger,
     num_epochs=10, lr=5e-4, device="cuda",
     save_path="best_model.pth",
     validation_cm_path="validation_cm.png"
@@ -95,11 +108,23 @@ def train_model(
     learning_rates = []
 
     best_f1 = 0.0
+    start_time = time.time()
+    
     for epoch in range(num_epochs):
-        print(f"\n===== Epoch {epoch+1}/{num_epochs} =====")
-        train_loss, lr = train_epoch(model, train_loader, criterion, optimizer, device)
-        val_loss, val_metrics, preds, labels_all = validate(model, val_loader, criterion, device)
+        epoch_start = time.time()
+        logger.info(f"\n===== Epoch {epoch+1}/{num_epochs} =====")
+        
+        train_loss, lr = train_epoch(
+            model, train_loader, criterion, optimizer, device
+        )
+        
+        val_loss, val_metrics, preds, labels_all = validate(
+            model, val_loader, criterion, device
+        )
+        
         scheduler.step(val_loss)
+        
+        epoch_time = time.time() - epoch_start
 
         train_losses.append(train_loss)
         val_losses.append(val_loss)
@@ -108,8 +133,15 @@ def train_model(
         f1_scores.append(val_metrics["f1"])
         learning_rates.append(lr)
 
-        print(
-            f"Val F1: {val_metrics["f1"]:.2f}% | Precision: {val_metrics["precision"]:.2f}% | Recall: {val_metrics["recall"]:.2f}%")
+        logger.info(
+            f"Train Loss: {train_loss:.4f} | "
+            f"Val Loss: {val_loss:.4f} | "
+            f"Val Precision: {val_metrics['precision']:.2f}% | "
+            f"Val Recall: {val_metrics['recall']:.2f}% | "
+            f"Val F1: {val_metrics['f1']:.2f}% | "
+            f"LR: {lr:.6f} | "
+            f"Time: {epoch_time:.2f}s"
+        )
 
         if val_metrics["f1"] > best_f1:
             label_mapping = train_loader.dataset.label2id
@@ -126,8 +158,14 @@ def train_model(
                 save_path=validation_cm_path
             )
             
-            print(f"✓ Best model saved with F1: {best_f1:.2f}%")
-            print(f"✓ Best validation results saved at: {validation_cm_path}")
+            logger.info(f"✓ Best model saved with F1: {best_f1:.2f}%")
+            logger.info(f"✓ Best validation results saved at: {validation_cm_path}")
+            
+    total_time = time.time() - start_time
+    
+    logger.info("========== TRAINING END ==========")
+    logger.info(f"Best F1: {best_f1:.2f}%")
+    logger.info(f"Total Time: {total_time/60:.2f} minutes")
             
     return (
         train_losses, val_losses, precision_scores,
@@ -158,3 +196,9 @@ def setup_logger(log_dir="logs"):
     logger.addHandler(console_handler)
 
     return logger, log_file
+
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
