@@ -112,7 +112,7 @@ def train_model(
     
     for epoch in range(num_epochs):
         epoch_start = time.time()
-        logger.info(f"\n===== Epoch {epoch+1}/{num_epochs} =====")
+        logger.info(f"===== Epoch {epoch+1}/{num_epochs} =====")
         
         train_loss, lr = train_epoch(
             model, train_loader, criterion, optimizer, device
