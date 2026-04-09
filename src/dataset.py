@@ -1,8 +1,9 @@
 '''
 Custom dataset class definition for Vietnamese sign language data
 '''
-
+import random
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 import json
 
@@ -54,6 +55,10 @@ class VSLDataset(Dataset):
         video_path = self.paths[idx]
         label = self.labels[idx]
         frames = read_video(video_path)
+        
+        if self.transform is not None:
+            frames = self.transform(frames)
+        
         frames = self._resample_frames(frames)
         frames = self._normalize(frames)
         
@@ -80,3 +85,124 @@ class VSLDataset(Dataset):
         mean = torch.tensor(self.norm_stats["mean"]).view(1, 3, 1, 1)
         std = torch.tensor(self.norm_stats["std"]).view(1, 3, 1, 1)
         return (frames - mean) / std
+    
+    
+class VideoAugmentation:
+    '''
+    Custom class for video data augmentation. These transformations are
+    consistent across all frames for one video
+    '''
+    
+    def __init__(
+        self, mode,
+        output_size=(224, 224),
+        crop_scale=(0.85, 1.0),
+        brightness=0.2,
+        contrast=0.2,
+        saturation=0.2,
+        speed_range=(0.9, 1.1)
+    ):
+        assert mode in ["train", "validation", "test"], "Invalid value for augmentation mode"
+        self.mode = mode
+        self.output_size = output_size
+        
+        if self.mode == "train":
+            self.crop_scale = crop_scale
+            self.brightness = brightness
+            self.contrast = contrast
+            self.saturation = saturation
+            self.speed_range = speed_range
+    
+    def __call__(self, frames):
+        if self.mode == "train":
+            # Speed Augmentation
+            frames = self._speed_augment(frames)
+
+            # Random Resized Crop
+            frames = self._random_resized_crop(frames)
+
+            # Color Jitter
+            frames = self._color_jitter(frames)
+            
+        else:
+            # Only resize for validation and test data
+            frames = self._resize(frames)
+            
+        return frames
+    
+    def _speed_augment(self, frames):
+        '''Changing video speed by resampling frames'''
+        T = frames.shape[0]
+        speed = random.uniform(self.speed_range[0], self.speed_range[1])
+
+        new_T = int(T / speed)
+        if new_T < 4:
+            new_T = 4
+        if new_T == T:
+            return frames
+
+        # Resample frames
+        indices = torch.linspace(0, T - 1, new_T).long()
+        indices = torch.clamp(indices, 0, T - 1)
+        frames = frames[indices]
+
+        return frames
+    
+    def _resize(self, frames):
+        H, W = frames.shape[1], frames.shape[2]
+        output_H, output_W = self.output_size
+        
+        if H != output_H or W != output_W:
+            frames = frames.permute(0, 3, 1, 2).float()
+            frames = F.interpolate(frames, size=self.output_size, mode='bilinear', align_corners=False)
+            frames = frames.permute(0, 2, 3, 1).to(torch.uint8)
+            
+        return frames
+
+    def _random_resized_crop(self, frames):
+        '''Random crop then resize to the desire output size'''
+        T, H, W, C = frames.shape
+
+        # Random scale and position
+        scale = random.uniform(self.crop_scale[0], self.crop_scale[1])
+        crop_h, crop_w = int(H * scale), int(W * scale)
+
+        top = random.randint(0, H - crop_h)
+        left = random.randint(0, W - crop_w)
+
+        # Crop all frames
+        frames = frames[:, top:top+crop_h, left:left+crop_w, :]
+
+        # Resize
+        # (T, H, W, C) -> (T, C, H, W) for interpolate
+        frames = frames.permute(0, 3, 1, 2).float()
+        frames = F.interpolate(frames, size=self.output_size, mode='bilinear', align_corners=False)
+        # (T, C, H, W) -> (T, H, W, C)
+        frames = frames.permute(0, 2, 3, 1)
+
+        return frames.to(torch.uint8)
+
+    def _color_jitter(self, frames):
+        '''Color jitter all frames'''
+        # Random parameters (same for all frames)
+        brightness_factor = 1.0 + random.uniform(-self.brightness, self.brightness)
+        contrast_factor = 1.0 + random.uniform(-self.contrast, self.contrast)
+        saturation_factor = 1.0 + random.uniform(-self.saturation, self.saturation)
+
+        frames = frames.float()
+
+        # Brightness
+        frames = frames * brightness_factor
+
+        # Contrast
+        mean = frames.mean(dim=(1, 2), keepdim=True)
+        frames = (frames - mean) * contrast_factor + mean
+
+        # Saturation
+        gray = frames.mean(dim=-1, keepdim=True)
+        frames = gray + (frames - gray) * saturation_factor
+
+        # Clamp to valid range
+        frames = torch.clamp(frames, 0, 255)
+
+        return frames.to(torch.uint8)
