@@ -12,6 +12,7 @@ from sklearn.metrics import precision_recall_fscore_support
 
 import torch
 import torch.nn as nn
+from torch.utils.data import WeightedRandomSampler
 from torch.optim import AdamW
 from tqdm.auto import tqdm
 
@@ -40,6 +41,24 @@ def split_train_val_paths(train_root, metadata_path, random_state=None):
     val_paths = (train_root / X_val["label"] / X_val["video_name"]).to_list()
     
     return train_paths, val_paths
+
+
+def create_balanced_sampler(dataset):
+    '''Create balanced sampler for imbalanced dataset'''
+    all_labels = dataset.labels
+
+    class_counts = np.bincount(all_labels)
+    class_weights = 1.0 / class_counts
+    sample_weights = [class_weights[label] for label in all_labels]
+    sample_weights = torch.FloatTensor(sample_weights)
+
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
+
+    return sampler
 
 
 def validate(model, dataloader, criterion, device):
