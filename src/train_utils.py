@@ -109,6 +109,7 @@ def train_epoch(model, dataloader, criterion, optimizer, device):
 def train_model(
     model, train_loader, val_loader, logger,
     num_epochs=10, lr=5e-4, device="cuda",
+    early_stopping_patience=3,
     save_path="best_model.pth",
     validation_cm_path="validation_cm.png"
 ):
@@ -127,6 +128,8 @@ def train_model(
     learning_rates = []
 
     best_f1 = 0.0
+    best_f1_epoch = 1
+    early_stopping_cnt = 0
     start_time = time.time()
     
     for epoch in range(num_epochs):
@@ -165,6 +168,8 @@ def train_model(
         if val_metrics["f1"] > best_f1:
             label_mapping = train_loader.dataset.label2id
             best_f1 = val_metrics["f1"]
+            best_f1_epoch = epoch + 1
+            early_stopping_cnt = 0
             torch.save(model.state_dict(), save_path)
 
             plot_confusion_matrix(
@@ -179,6 +184,16 @@ def train_model(
             
             logger.info(f"✓ Best model saved with F1: {best_f1:.2f}%")
             logger.info(f"✓ Best validation results saved at: {validation_cm_path}")
+        
+        else:
+            early_stopping_cnt += 1
+            
+        if early_stopping_cnt == early_stopping_patience:
+            logger.info(
+                f"Early stopping triggered. Best weighted F1: {best_f1:.2f},",
+                f"achieved on epoch {best_f1_epoch}"
+            )
+            break
             
     total_time = time.time() - start_time
     
