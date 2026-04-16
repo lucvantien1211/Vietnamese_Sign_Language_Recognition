@@ -133,6 +133,11 @@ class ConvNeXtTransformer(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
+    def freeze_convnext_features(self, freeze_until=3):
+        for i in range(freeze_until + 1):
+            for p in self.cnn[i].parameters():
+                p.requires_grad = False
+
     def forward(self, x):
         B, T, C, H, W = x.shape
 
