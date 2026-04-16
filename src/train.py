@@ -7,8 +7,6 @@ import re
 
 import torch
 import torch.nn as nn
-from torch.optim import AdamW
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from torchvision import models
@@ -80,10 +78,15 @@ def main():
     logger.info(f"Val samples: {len(val_paths)}")
     
     # ==== Dataset & Loader ====
+    ## Augmentation
+    train_transforms = VideoAugmentation(mode="train")
+    val_transforms = VideoAugmentation(mode="validation")
+    
     train_dataset = VSLDataset(
         paths=train_paths,
         label_mapping_path=args.label_mapping_path,
         mode="train",
+        transform=train_transforms,
         target_frames=16
     )
     
@@ -91,14 +94,18 @@ def main():
         paths=val_paths,
         label_mapping_path=args.label_mapping_path,
         mode="validation",
+        transform=val_transforms,
         target_frames=16
     )
+
+    ## Balance sampler for train dataset
+    balanced_sampler = create_balanced_sampler(train_dataset)
     
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         collate_fn=collate_fn,
-        shuffle=True,
+        sampler=balanced_sampler,
         num_workers=args.num_workers,
         worker_init_fn=seed_worker,
         generator=g
@@ -120,6 +127,12 @@ def main():
             num_classes=len(train_dataset.label2id),
             resnet_pretrained_weights=models.ResNet18_Weights.IMAGENET1K_V1
         )
+    elif args.model == "convnext-transformer":
+        model = ConvNeXtTransformer(
+            num_classes=len(train_dataset.label2id),
+            convnext_pretrained_weights=models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1
+        )
+        model.freeze_convnext_features(freeze_until=3)
     else:
         logger.info(f"The model {args.model} is not supported. Ending training ...")
         return
@@ -135,7 +148,7 @@ def main():
     validation_results_dir.mkdir(exist_ok=True)
     
     log_datetime = re.search(r'train_(\d{8}_\d{6})', log_file.stem).group(1)
-    model_save_path = model_save_dir / f"best_model_{log_datetime}.pth"
+    model_save_path = model_save_dir / f"best_model_{log_datetime}.safetensors"
     train_progress_path = train_progress_dir / f"train_progress_{log_datetime}.png"
     validation_results_path = validation_results_dir / f"validation_results_{log_datetime}.png"
     
