@@ -3,6 +3,7 @@ torch
 torchvision
 timm
 pytorch-lightning
+safetensors
 
 # Computer Vision
 opencv-python
