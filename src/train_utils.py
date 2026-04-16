@@ -14,7 +14,10 @@ import torch
 import torch.nn as nn
 from torch.utils.data import WeightedRandomSampler
 from torch.optim import AdamW
+from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingWarmRestarts
 from tqdm.auto import tqdm
+
+from safetensors.torch import save_file
 
 from src.plot_utils import plot_confusion_matrix
 
@@ -110,14 +113,21 @@ def train_model(
     model, train_loader, val_loader, logger,
     num_epochs=10, lr=5e-4, device="cuda",
     early_stopping_patience=3,
-    save_path="best_model.pth",
+    save_path="best_model.safetensors",
     validation_cm_path="validation_cm.png"
 ):
     model = model.to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, "min", factor=0.5, patience=3
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+    optimizer = AdamW(
+        params=filter(lambda p: p.requires_grad, model.parameters()),
+        lr=lr,
+        weight_decay=1e-4
+    )
+    scheduler = CosineAnnealingWarmRestarts(
+        optimizer,
+        T_0=10,
+        T_mult=2,
+        eta_min=1e-6
     )
 
     train_losses = []
@@ -144,7 +154,7 @@ def train_model(
             model, val_loader, criterion, device
         )
         
-        scheduler.step(val_loss)
+        scheduler.step()
         
         epoch_time = time.time() - epoch_start
 
@@ -170,7 +180,7 @@ def train_model(
             best_f1 = val_metrics["f1"]
             best_f1_epoch = epoch + 1
             early_stopping_cnt = 0
-            torch.save(model.state_dict(), save_path)
+            save_file(model.state_dict(), save_path)
 
             plot_confusion_matrix(
                 labels_all, preds,
@@ -190,7 +200,7 @@ def train_model(
             
         if early_stopping_cnt == early_stopping_patience:
             logger.info(
-                f"Early stopping triggered. Best weighted F1: {best_f1:.2f},",
+                f"Early stopping triggered. Best macro F1: {best_f1:.2f}, "
                 f"achieved on epoch {best_f1_epoch}"
             )
             break
