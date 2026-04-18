@@ -26,3 +26,6 @@ einops
 
 # Config
 pyyaml
+
+# Demo-app
+gradio
