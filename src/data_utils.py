@@ -10,6 +10,19 @@ from pathlib import Path
 
 
 def get_sample_frames(video_path, num_frames=5):
+    '''
+    Extract evenly spaced sample frames from a video
+
+    Args:
+        video_path (str | Path): path to the input video
+        num_frames (int)       : number of frames to sample evenly across
+                                 the video, default: 5
+
+    Returns:
+        frames (lst): list of sampled frames in RGB format.
+                      Returns None if the video cannot be opened
+                      or contains no frames
+    '''
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
@@ -36,6 +49,20 @@ def get_sample_frames(video_path, num_frames=5):
 
 
 def read_video(video_path):
+    '''
+    Read all frames from a video file
+
+    Args:
+        video_path (str | Path): path to the input video
+
+    Returns:
+        frames (torch.Tensor): tensor containing all video frames
+                               in RGB format with shape
+                               (num_frames, height, width, channels)
+
+    Raises:
+        ValueError: if no frames can be read from the video
+    '''
     cap = cv2.VideoCapture(video_path)
     frames = []
     
@@ -54,6 +81,18 @@ def read_video(video_path):
 
 
 def get_all_path(root, labeled=True):
+    '''
+    Collect all video file paths from a dataset directory
+
+    Args:
+        root (str | Path) : root directory of the dataset
+        labeled (bool)    : whether the dataset is organized into
+                            class subdirectories, default: True
+                            for training set
+
+    Returns:
+        all_path (lst): list of video file paths
+    '''
     root = Path(root)
     all_path = []
     
@@ -79,6 +118,21 @@ def get_all_path(root, labeled=True):
 
 
 def get_video_metadata(video_path):
+    '''
+    Retrieve metadata information from a video file
+
+    Args:
+        video_path (str | Path): path to the input video
+
+    Returns:
+        tuple: a tuple containing:
+               - height (int)     : frame height
+               - width (int)      : frame width
+               - frame_count (int): total number of frames
+               - fps (float)      : frames per second
+
+        Returns None if the video cannot be opened
+    '''
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
@@ -95,4 +149,13 @@ def get_video_metadata(video_path):
 
 
 def nfc_normalize(s):
+    '''
+    Normalize a Unicode string using NFC normalization
+
+    Args:
+        s (str): input string
+
+    Returns:
+        str: NFC-normalized string
+    '''
     return unicodedata.normalize("NFC", s)
