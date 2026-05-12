@@ -13,8 +13,22 @@ import seaborn as sns
 from src.data_utils import get_sample_frames
 
 
-# Function for plotting sample frames from videos in training set
 def plot_sample_frames(root, sample_classes=["Ăn", "Nghỉ ngơi", "Chạy"], n_frames=5, save_path=None):
+    '''
+    Plot sampled frames from random videos of selected classes
+
+    Args:
+        root (str | Path)      : root directory of the dataset
+        sample_classes (lst)   : list of class names to visualize,
+                                 default: ["Ăn", "Nghỉ ngơi", "Chạy"]
+        n_frames (int)         : number of sampled frames per video,
+                                 default: 5
+        save_path (str)        : path to save the figure if provided,
+                                 default: None
+
+    Returns:
+        None
+    '''
     
     # Set up
     n_sample_classes = len(sample_classes)
@@ -66,6 +80,19 @@ def plot_sample_frames(root, sample_classes=["Ăn", "Nghỉ ngơi", "Chạy"], n
     
     
 def plot_resolution_distribution(all_width, all_height, save_path=None):
+    '''
+    Plot the distribution of video frame resolutions
+
+    Args:
+        all_width (ArrayLike) : list of frame widths
+        all_height (ArrayLike): list of frame heights
+        save_path (str)       : path to save the figure if provided,
+                                default: None
+
+    Returns:
+        None
+    '''
+    
     # Set up
     plt.figure(figsize=(8, 6))
     
@@ -85,6 +112,19 @@ def plot_resolution_distribution(all_width, all_height, save_path=None):
     
     
 def plot_frame_count_distribution(all_frame_count, save_path=None):
+    '''
+    Plot the distribution of video frame counts
+
+    Args:
+        all_frame_count (ArrayLike): collection of frame counts
+                                     for all videos
+        save_path (str)            : path to save the figure
+                                     if provided, default: None
+
+    Returns:
+        None
+    '''
+    
     # Set up
     plt.figure(figsize=(8, 6))
     frame_count_dist = all_frame_count.value_counts()
@@ -111,6 +151,18 @@ def plot_frame_count_distribution(all_frame_count, save_path=None):
     
     
 def plot_class_balance(labels, save_path=None):
+    '''
+    Plot the class distribution of the dataset
+
+    Args:
+        labels (ArrayLike): collection of class labels
+        save_path (str)   : path to save the figure if provided,
+                            default: None
+
+    Returns:
+        None
+    '''
+    
     # Set up
     plt.figure(figsize=(18, 6))
     class_count = labels.value_counts()
