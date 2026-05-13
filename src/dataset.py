@@ -1,7 +1,7 @@
 '''
 Custom dataset class definition for Vietnamese sign language data
 
-Credited to AI VIET NAM: https://aivietnam.edu.vn for custom Dataset class
+Credit to AI VIET NAM: https://aivietnam.edu.vn for custom Dataset class
 and VideoAugmentation class
 '''
 import random
