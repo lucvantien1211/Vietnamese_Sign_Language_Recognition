@@ -36,6 +36,10 @@ def load_model(model_path, num_classes):
 
 
 def resample_frames(frames, target_frames):
+    '''
+    Same as VSLDataset's _resample_frames method
+    '''
+    
     total = frames.shape[0]
 
     if total >= target_frames:
@@ -49,6 +53,10 @@ def resample_frames(frames, target_frames):
 
 
 def normalize_frames(frames, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
+    '''
+    Same as VSLDataset's _normalize method
+    '''
+    
     frames = frames.permute(0, 3, 1, 2).float() / 255.0
 
     mean = torch.tensor(mean).view(1, 3, 1, 1)
@@ -58,7 +66,24 @@ def normalize_frames(frames, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.22
 
 
 def preprocess_video(video_path):
-    transforms = VideoAugmentation(mode="test")
+    '''
+    Preprocess a video for model inference
+
+    Args:
+        video_path (str | Path): path to the input video
+
+    Returns:
+        torch.Tensor: preprocessed video tensor with shape
+                      (1, num_frames, channels, height, width)
+
+    Notes:
+        - Applies test-time video transformations
+        - Resamples frames to TARGET_FRAMES
+        - Normalizes pixel values using predefined normalization stats
+        - Adds a batch dimension for inference
+    '''
+    
+    transforms = VideoAugmentation(mode="test") # resize
     frames = read_video(video_path)  # (T,H,W,C) uint8
 
     frames = transforms(frames)
@@ -69,6 +94,25 @@ def preprocess_video(video_path):
 
 
 def predict_video(video_path, model, id2label):
+    '''
+    Predict the class label of a video using a trained model
+
+    Args:
+        video_path (str | Path): path to the input video
+        model (nn.Module)      : trained classification model
+        id2label (dict)        : mapping from class id to label name
+
+    Returns:
+        str: formatted prediction result containing:
+             - predicted label
+             - prediction confidence score
+
+    Notes:
+        - Video is automatically preprocessed before inference
+        - Prediction confidence is computed using softmax probability
+        - Inference is performed without gradient computation
+    '''
+    
     if video_path is None:
         return "No video"
 
@@ -86,6 +130,31 @@ def predict_video(video_path, model, id2label):
 
 
 def predict_webcam(frame, state, model, id2label):
+    '''
+    Perform webcam prediction for sign language recognition
+
+    Args:
+        frame (np.ndarray) : input webcam frame in BGR format
+        state (dict)       : state dictionary used to maintain:
+                             - frame buffer
+                             - cooldown counter
+                             - prediction logs
+        model (nn.Module)  : trained classification model
+        id2label (dict)    : mapping from class id to label name
+
+    Returns:
+        tuple:
+            - output_text (str): formatted system status and prediction log
+            - state (dict)     : updated state dictionary
+
+    Notes:
+        - Frames are accumulated until MAX_FRAMES is reached
+        - Prediction is performed after collecting enough frames
+        - A cooldown period prevents repeated predictions
+        - Logs are limited to the most recent 10 predictions
+        - Input frames are automatically preprocessed before inference
+    '''
+    
     if state is None:
         state = {"buffer": [], "cooldown": 0, "log": []}
         
