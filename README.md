@@ -21,39 +21,6 @@ The project supports:
 
 ---
 
-## Model Architecture
-
-The architectures that were experimented in the project include:
-
-### CNN Backbone (Spatial Features Extraction)
-
-* ResNet (ResNet 18)
-* ConvNeXt (Tiny)
-
-### Temporal Modeling
-
-* Transformer
-* LSTM / GRU
-* Temporal pooling
-
-### General Pipeline
-
-```text
-Video / Webcam
-      ↓
-Frame Extraction
-      ↓
-CNN Feature Extractor
-      ↓
-Temporal Module
-      ↓
-Classifier
-      ↓
-Predicted Sign
-```
-
----
-
 ## Dataset
 
 The given sign language datasets are organized as follows:
@@ -70,6 +37,26 @@ dataset/
 ```
 
 Each subfolder in `train/` represents a specific sign.
+
+The `label_mapping.pkl` file contains mapping from string label to integer.
+
+---
+
+## Project Structure
+
+```text
+project/
+├── dataset/
+├── fig/
+├── logs/
+├── models/
+├── notebooks/
+├── src/
+├── train_progress/
+├── validation_results/
+├── app.py
+└── requirements.txt
+```
 
 ---
 
@@ -105,26 +92,52 @@ pip install -r requirements.txt
 ```
 
 ---
+## Model Architecture
 
-## Project Structure
+The architectures that were experimented in the project include:
+
+### CNN Backbone (Spatial Features Extraction)
+
+* ResNet (ResNet 18)
+* ConvNeXt (Tiny)
+
+### Temporal Modeling
+
+* Transformer
+* LSTM / GRU
+* Temporal pooling
+
+### General Pipeline
 
 ```text
-project/
-├── dataset/
-├── fig/
-├── logs/
-├── models/
-├── notebooks/
-├── src/
-├── train_progress/
-├── validation_results/
-├── app.py
-└── requirements.txt
+Video / Webcam
+      ↓
+Frame Extraction
+      ↓
+CNN Feature Extractor
+      ↓
+Temporal Module
+      ↓
+Classifier
+      ↓
+Predicted Sign
 ```
 
 ---
 
 ## Training
+
+### Prerequisites
+Before training, you must:
+- Create `video_metadata.csv` file by running the script:
+```bash
+python -m src.generate_video_metadata
+```
+- Convert `label_mapping.pkl` to `label_mapping.json` by running the script:
+```bash
+python -m src.convert_label_mapping_json
+```
+(Add arrguments if needed)
 
 ### Train the Model
 
