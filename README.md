@@ -137,7 +137,7 @@ python -m src.generate_video_metadata
 ```bash
 python -m src.convert_label_mapping_json
 ```
-(Add arrguments if needed)
+(Add arguments if needed)
 
 ### Train the Model
 
